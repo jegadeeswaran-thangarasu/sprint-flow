@@ -2,7 +2,9 @@ import express, { Application, Request, Response } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
 import errorHandler from './middleware/errorHandler';
+import authRoutes from './routes/authRoutes';
 
 const app: Application = express();
 
@@ -14,6 +16,7 @@ app.use(
   })
 );
 app.use(express.json());
+app.use(cookieParser());
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -25,8 +28,7 @@ const apiLimiter = rateLimit({
 
 app.use('/api/', apiLimiter);
 
-// Routes — to be mounted as features are built
-// app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/auth', authRoutes);
 // app.use('/api/v1/projects', projectRoutes);
 // app.use('/api/v1/issues', issueRoutes);
 

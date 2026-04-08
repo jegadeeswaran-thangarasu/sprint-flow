@@ -6,7 +6,8 @@ export interface IUser extends Document {
   email: string;
   passwordHash: string;
   avatar?: string;
-  role: 'admin' | 'member' | 'viewer';
+  role: 'admin' | 'member';
+  refreshToken?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -50,3 +51,11 @@ export type TJwtPayload = {
   userId: string;
   email: string;
 };
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: TJwtPayload;
+    }
+  }
+}

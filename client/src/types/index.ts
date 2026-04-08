@@ -2,10 +2,15 @@ export interface IUser {
   _id: string;
   name: string;
   email: string;
-  avatar?: string;
-  role: 'admin' | 'member' | 'viewer';
+  avatar: string;
+  role: 'admin' | 'member';
   createdAt: string;
   updatedAt: string;
+}
+
+export interface TAuthResponse {
+  user: IUser;
+  accessToken: string;
 }
 
 export interface IProject {
