@@ -1,0 +1,52 @@
+import { Document, Types } from 'mongoose';
+
+export interface IUser extends Document {
+  _id: Types.ObjectId;
+  name: string;
+  email: string;
+  passwordHash: string;
+  avatar?: string;
+  role: 'admin' | 'member' | 'viewer';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IProject extends Document {
+  _id: Types.ObjectId;
+  name: string;
+  description: string;
+  key: string;
+  owner: Types.ObjectId;
+  members: Types.ObjectId[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IIssue extends Document {
+  _id: Types.ObjectId;
+  title: string;
+  description: string;
+  status: 'backlog' | 'todo' | 'in-progress' | 'in-review' | 'done';
+  priority: 'critical' | 'high' | 'medium' | 'low';
+  type: 'story' | 'bug' | 'task' | 'subtask';
+  project: Types.ObjectId;
+  assignee?: Types.ObjectId;
+  reporter: Types.ObjectId;
+  sprint?: Types.ObjectId;
+  storyPoints?: number;
+  labels: string[];
+  order: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type TApiResponse<T> = {
+  success: boolean;
+  data: T;
+  message: string;
+};
+
+export type TJwtPayload = {
+  userId: string;
+  email: string;
+};
