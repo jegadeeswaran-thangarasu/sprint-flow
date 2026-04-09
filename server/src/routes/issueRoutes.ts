@@ -7,12 +7,16 @@ import {
   createIssue,
   getProjectIssues,
   getIssueById,
+  getFullIssueDetail,
+  getIssueActivity,
   updateIssue,
   updateIssueStatus,
   deleteIssue,
   addWatcher,
   removeWatcher,
   getBacklogIssues,
+  getBoardIssues,
+  bulkUpdateIssueOrder,
 } from '../controllers/issueController';
 
 const router = Router({ mergeParams: true });
@@ -33,6 +37,27 @@ const TYPE_VALUES = ['story', 'task', 'bug', 'epic', 'subtask'] as const;
 const issueAccess = [authenticate, requireOrgRole(['owner', 'admin', 'member']), requireProjectAccess];
 
 router.get('/backlog', ...issueAccess, getBacklogIssues);
+
+router.get(
+  '/board/:sprintId',
+  ...issueAccess,
+  [param('sprintId').isMongoId()],
+  validate,
+  getBoardIssues
+);
+
+router.post(
+  '/board/reorder',
+  ...issueAccess,
+  [
+    body('updates').isArray({ min: 1 }).withMessage('updates must be a non-empty array'),
+    body('updates.*.issueId').isMongoId(),
+    body('updates.*.status').isIn(STATUS_VALUES),
+    body('updates.*.order').isInt({ min: 0 }),
+  ],
+  validate,
+  bulkUpdateIssueOrder
+);
 
 router.post(
   '/',
@@ -60,6 +85,22 @@ router.get(
   ],
   validate,
   getProjectIssues
+);
+
+router.get(
+  '/:issueId/full',
+  ...issueAccess,
+  [param('issueId').isMongoId()],
+  validate,
+  getFullIssueDetail
+);
+
+router.get(
+  '/:issueId/activity',
+  ...issueAccess,
+  [param('issueId').isMongoId()],
+  validate,
+  getIssueActivity
 );
 
 router.get('/:issueId', ...issueAccess, [param('issueId').isMongoId()], validate, getIssueById);

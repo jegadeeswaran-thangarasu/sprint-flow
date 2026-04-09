@@ -3,18 +3,23 @@ import {
   createIssue as createIssueService,
   getProjectIssues as getProjectIssuesService,
   getIssueById as getIssueByIdService,
+  getFullIssueDetail as getFullIssueDetailService,
+  getIssueActivity as getIssueActivityService,
   updateIssue as updateIssueService,
   updateIssueStatus as updateIssueStatusService,
   deleteIssue as deleteIssueService,
   addWatcher as addWatcherService,
   removeWatcher as removeWatcherService,
   getBacklogIssues as getBacklogIssuesService,
+  getBoardIssues as getBoardIssuesService,
+  bulkUpdateIssueOrder as bulkUpdateIssueOrderService,
   TCreateIssueData,
   TIssueFilters,
   TUpdateIssueData,
+  TBoardData,
 } from '../services/issueService';
 import { IIssueDocument, IssuePriority, IssueStatus, IssueType } from '../models/Issue';
-import { TApiResponse, TJwtPayload, IUser } from '../types';
+import { TApiResponse, TJwtPayload, IUser, IBulkUpdateItem, IFullIssue, IActivityLog } from '../types';
 import { IOrgMemberDocument } from '../models/OrgMember';
 
 const firstQuery = (value: unknown): string | undefined => {
@@ -136,6 +141,56 @@ export const getIssueById = async (
       success: true,
       data: issue,
       message: 'Issue retrieved successfully',
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getFullIssueDetail = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { userId } = req.user as TJwtPayload;
+    const orgMember = req.orgMember as IOrgMemberDocument;
+    const { issueId } = req.params;
+    const orgId = orgMember.organisation.toString();
+
+    const issue = await getFullIssueDetailService(issueId, orgId, userId);
+
+    const response: TApiResponse<IFullIssue> = {
+      success: true,
+      data: issue,
+      message: 'Issue detail retrieved successfully',
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getIssueActivity = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { userId } = req.user as TJwtPayload;
+    const orgMember = req.orgMember as IOrgMemberDocument;
+    const { issueId } = req.params;
+    const orgId = orgMember.organisation.toString();
+
+    const activity = await getIssueActivityService(issueId, orgId, userId);
+
+    const response: TApiResponse<IActivityLog[]> = {
+      success: true,
+      data: activity,
+      message: 'Issue activity retrieved successfully',
     };
 
     res.status(200).json(response);
@@ -297,6 +352,57 @@ export const removeWatcher = async (
       success: true,
       data: watchers,
       message: 'Watcher removed successfully',
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getBoardIssues = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { userId } = req.user as TJwtPayload;
+    const orgMember = req.orgMember as IOrgMemberDocument;
+    const { projectId, sprintId } = req.params;
+    const orgId = orgMember.organisation.toString();
+
+    const data = await getBoardIssuesService(projectId, sprintId, orgId, userId);
+
+    const response: TApiResponse<TBoardData> = {
+      success: true,
+      data,
+      message: 'Board issues retrieved successfully',
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const bulkUpdateIssueOrder = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { userId } = req.user as TJwtPayload;
+    const orgMember = req.orgMember as IOrgMemberDocument;
+    const orgId = orgMember.organisation.toString();
+
+    const { updates } = req.body as { updates: IBulkUpdateItem[] };
+
+    await bulkUpdateIssueOrderService(updates, orgId, userId);
+
+    const response: TApiResponse<null> = {
+      success: true,
+      data: null,
+      message: 'Issue order updated successfully',
     };
 
     res.status(200).json(response);

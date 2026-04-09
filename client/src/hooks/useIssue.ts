@@ -3,17 +3,21 @@ import {
   createIssue,
   deleteIssue,
   getBacklogIssues,
+  getBoardIssues,
+  getFullIssueDetail,
+  getIssueActivity,
   getIssueById,
   getProjectIssues,
   updateIssue,
   updateIssueStatus as updateIssueStatusApi,
+  bulkUpdateIssueOrder,
   TCreateIssueData,
   TProjectIssueFilters,
   TUpdateIssueData,
 } from '@/api/issueApi';
 import useIssueStore from '@/store/issueStore';
 import { QUERY_KEYS } from '@/utils/constants';
-import { IIssue, IssueStatus } from '@/types';
+import { IBulkUpdateItem, IIssue, IssueStatus } from '@/types';
 
 export const useProjectIssues = (
   orgSlug: string,
@@ -57,6 +61,30 @@ export const useIssue = (orgSlug: string, projectId: string, issueId: string | u
       setCurrentIssue(issue);
       return issue;
     },
+    enabled: Boolean(orgSlug) && Boolean(projectId) && Boolean(issueId),
+  });
+};
+
+export const useFullIssue = (
+  orgSlug: string,
+  projectId: string,
+  issueId: string | undefined,
+) => {
+  return useQuery({
+    queryKey: issueId ? QUERY_KEYS.ISSUE(issueId) : ['issues', 'detail', 'disabled'],
+    queryFn: () => getFullIssueDetail(orgSlug, projectId, issueId as string),
+    enabled: Boolean(orgSlug) && Boolean(projectId) && Boolean(issueId),
+  });
+};
+
+export const useIssueActivity = (
+  orgSlug: string,
+  projectId: string,
+  issueId: string | undefined,
+) => {
+  return useQuery({
+    queryKey: issueId ? QUERY_KEYS.ISSUE_ACTIVITY(issueId) : ['activity', 'disabled'],
+    queryFn: () => getIssueActivity(orgSlug, projectId, issueId as string),
     enabled: Boolean(orgSlug) && Boolean(projectId) && Boolean(issueId),
   });
 };
@@ -147,6 +175,25 @@ export const useDeleteIssue = (orgSlug: string, projectId: string) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ISSUES(projectId) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.BACKLOG_ISSUES(projectId) });
       queryClient.removeQueries({ queryKey: QUERY_KEYS.ISSUE(issueId) });
+    },
+  });
+};
+
+export const useBoardIssues = (orgSlug: string, projectId: string, sprintId: string) => {
+  return useQuery({
+    queryKey: QUERY_KEYS.BOARD_ISSUES(sprintId),
+    queryFn: () => getBoardIssues(orgSlug, projectId, sprintId),
+    enabled: Boolean(orgSlug) && Boolean(projectId) && Boolean(sprintId),
+  });
+};
+
+export const useBulkUpdateOrder = (orgSlug: string, projectId: string, sprintId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (updates: IBulkUpdateItem[]) => bulkUpdateIssueOrder(orgSlug, projectId, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.BOARD_ISSUES(sprintId) });
     },
   });
 };

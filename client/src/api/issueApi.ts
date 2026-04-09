@@ -1,6 +1,11 @@
 import apiClient from '@/api/client';
 import {
+  IBoardData,
+  IBulkUpdateItem,
+  IActivityLog,
+  IFullIssue,
   IIssue,
+  IUser,
   IssuePriority,
   IssueStatus,
   IssueType,
@@ -100,6 +105,28 @@ export const getIssueById = async (
   return data.data;
 };
 
+export const getFullIssueDetail = async (
+  orgSlug: string,
+  projectId: string,
+  issueId: string,
+): Promise<IFullIssue> => {
+  const { data } = await apiClient.get<TApiResponse<IFullIssue>>(
+    `/organisations/${orgSlug}/projects/${projectId}/issues/${issueId}/full`,
+  );
+  return data.data;
+};
+
+export const getIssueActivity = async (
+  orgSlug: string,
+  projectId: string,
+  issueId: string,
+): Promise<IActivityLog[]> => {
+  const { data } = await apiClient.get<TApiResponse<IActivityLog[]>>(
+    `/organisations/${orgSlug}/projects/${projectId}/issues/${issueId}/activity`,
+  );
+  return data.data;
+};
+
 export const updateIssue = async (
   orgSlug: string,
   projectId: string,
@@ -133,4 +160,48 @@ export const deleteIssue = async (
   issueId: string,
 ): Promise<void> => {
   await apiClient.delete(`/organisations/${orgSlug}/projects/${projectId}/issues/${issueId}`);
+};
+
+export const getBoardIssues = async (
+  orgSlug: string,
+  projectId: string,
+  sprintId: string,
+): Promise<IBoardData> => {
+  const { data } = await apiClient.get<TApiResponse<IBoardData>>(
+    `/organisations/${orgSlug}/projects/${projectId}/issues/board/${sprintId}`,
+  );
+  return data.data;
+};
+
+export const bulkUpdateIssueOrder = async (
+  orgSlug: string,
+  projectId: string,
+  updates: IBulkUpdateItem[],
+): Promise<void> => {
+  await apiClient.post(
+    `/organisations/${orgSlug}/projects/${projectId}/issues/board/reorder`,
+    { updates },
+  );
+};
+
+export const addIssueWatcher = async (
+  orgSlug: string,
+  projectId: string,
+  issueId: string,
+): Promise<IUser[]> => {
+  const { data } = await apiClient.post<TApiResponse<IUser[]>>(
+    `/organisations/${orgSlug}/projects/${projectId}/issues/${issueId}/watch`,
+  );
+  return data.data;
+};
+
+export const removeIssueWatcher = async (
+  orgSlug: string,
+  projectId: string,
+  issueId: string,
+): Promise<IUser[]> => {
+  const { data } = await apiClient.delete<TApiResponse<IUser[]>>(
+    `/organisations/${orgSlug}/projects/${projectId}/issues/${issueId}/watch`,
+  );
+  return data.data;
 };

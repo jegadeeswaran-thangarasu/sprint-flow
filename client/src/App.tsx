@@ -10,6 +10,7 @@ import AcceptInvitePage from '@/pages/AcceptInvitePage';
 import ProjectsPage from '@/pages/ProjectsPage';
 import BoardPage from '@/pages/BoardPage';
 import BacklogPage from '@/pages/BacklogPage';
+import IssueDetailPage from '@/pages/IssueDetailPage';
 
 const PlaceholderPage = ({ title }: { title: string }) => (
   <div className="flex items-center justify-center h-64">
@@ -36,6 +37,7 @@ const App = () => {
           {/* Org-scoped — OrgRoute handles org loading and layout */}
           <Route path="/org/:orgSlug" element={<OrgRoute />}>
             <Route path="projects" element={<ProjectsPage />} />
+            <Route path="projects/:projectId/issues/:issueId" element={<IssueDetailPage />} />
             <Route path="projects/:projectId/board" element={<BoardPage />} />
             <Route path="projects/:projectId/backlog" element={<BacklogPage />} />
             <Route path="members" element={<OrgMembersPage />} />

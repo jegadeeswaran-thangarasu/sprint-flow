@@ -9,8 +9,17 @@ import IssueCounter from '../models/IssueCounter';
 import Project, { IProjectDocument } from '../models/Project';
 import OrgMember from '../models/OrgMember';
 import Sprint from '../models/Sprint';
+import ActivityLog from '../models/ActivityLog';
 import ApiError from '../utils/ApiError';
-import { IUser, OrgRole } from '../types';
+import logger from '../utils/logger';
+import {
+  IUser,
+  IBulkUpdateItem,
+  OrgRole,
+  ActivityAction,
+  IFullIssue,
+  IActivityLog,
+} from '../types';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -34,6 +43,50 @@ async function requireActiveOrgMember(
   });
   if (!member) throw new ApiError(403, 'You are not an active member of this organisation');
   return { role: member.role };
+}
+
+async function logActivity(
+  issueId: string,
+  projectId: string,
+  orgId: string,
+  actorId: string,
+  action: ActivityAction,
+  field?: string,
+  oldValue?: string,
+  newValue?: string
+): Promise<void> {
+  try {
+    await ActivityLog.create({
+      issue: new Types.ObjectId(issueId),
+      project: new Types.ObjectId(projectId),
+      organisation: new Types.ObjectId(orgId),
+      actor: new Types.ObjectId(actorId),
+      action,
+      field,
+      oldValue,
+      newValue,
+    });
+  } catch (error: unknown) {
+    logger.warn('Failed to write activity log', { error });
+  }
+}
+
+function mapUserForActivityLog(doc: unknown): IUser {
+  if (!doc || typeof doc !== 'object' || !('_id' in doc)) {
+    throw new ApiError(500, 'Invalid actor payload');
+  }
+  const o = doc as Record<string, unknown>;
+  return {
+    _id: String(o._id),
+    name: String(o.name ?? ''),
+    email: String(o.email ?? ''),
+    avatar: typeof o.avatar === 'string' ? o.avatar : undefined,
+    role: o.role === 'admin' ? 'admin' : 'member',
+    createdAt:
+      o.createdAt instanceof Date ? o.createdAt.toISOString() : String(o.createdAt ?? new Date().toISOString()),
+    updatedAt:
+      o.updatedAt instanceof Date ? o.updatedAt.toISOString() : String(o.updatedAt ?? new Date().toISOString()),
+  };
 }
 
 async function getProjectInOrgOrThrow(
@@ -92,6 +145,12 @@ const issuePopulateListFields = [
     path: 'epic',
     select: 'key title',
   },
+];
+
+const issueBoardPopulate = [
+  { path: 'assignee', select: 'name avatar email' },
+  { path: 'reporter', select: 'name avatar' },
+  { path: 'epic', select: '_id key title' },
 ];
 
 function populateIssueById(issueId: Types.ObjectId | string): Promise<IIssueDocument | null> {
@@ -195,6 +254,8 @@ export const createIssue = async (
 
   await Project.findByIdAndUpdate(project._id, { $inc: { issueCount: 1 } });
 
+  void logActivity(issue._id.toString(), projectId, orgId, userId, 'created');
+
   const populated = await populateIssueById(issue._id);
   if (!populated) throw new ApiError(500, 'Failed to load created issue');
   return populated;
@@ -266,6 +327,64 @@ export const getIssueById = async (
   return issue;
 };
 
+const fullIssueDetailPopulate = [
+  { path: 'assignee', select: 'name email avatar' },
+  { path: 'reporter', select: 'name email avatar' },
+  { path: 'watchers', select: 'name email avatar' },
+  { path: 'epic', select: '_id key title status' },
+  { path: 'parent', select: '_id key title status' },
+  { path: 'sprint', select: '_id name status startDate endDate' },
+  { path: 'project', select: '_id name key color icon' },
+];
+
+export const getFullIssueDetail = async (
+  issueId: string,
+  orgId: string,
+  userId: string
+): Promise<IFullIssue> => {
+  const orgObjectId = new Types.ObjectId(orgId);
+  await requireActiveOrgMember(orgObjectId, userId);
+
+  const issue = await Issue.findById(issueId).populate(fullIssueDetailPopulate);
+  if (!issue) throw new ApiError(404, 'Issue not found');
+  if (!issue.organisation.equals(orgObjectId)) {
+    throw new ApiError(403, 'You do not have access to this issue');
+  }
+
+  return issue as unknown as IFullIssue;
+};
+
+export const getIssueActivity = async (
+  issueId: string,
+  orgId: string,
+  userId: string
+): Promise<IActivityLog[]> => {
+  const orgObjectId = new Types.ObjectId(orgId);
+  await requireActiveOrgMember(orgObjectId, userId);
+
+  const issue = await Issue.findById(issueId);
+  if (!issue) throw new ApiError(404, 'Issue not found');
+  if (!issue.organisation.equals(orgObjectId)) {
+    throw new ApiError(403, 'You do not have access to this issue');
+  }
+
+  const logs = await ActivityLog.find({ issue: new Types.ObjectId(issueId) })
+    .populate('actor', 'name avatar email role createdAt updatedAt')
+    .sort({ createdAt: -1 })
+    .limit(50);
+
+  return logs.map((log) => ({
+    _id: log._id.toString(),
+    issue: log.issue.toString(),
+    actor: mapUserForActivityLog(log.actor),
+    action: log.action,
+    field: log.field ?? null,
+    oldValue: log.oldValue ?? null,
+    newValue: log.newValue ?? null,
+    createdAt: log.createdAt.toISOString(),
+  }));
+};
+
 export interface TUpdateIssueData {
   title?: string;
   description?: string;
@@ -300,6 +419,70 @@ export const updateIssue = async (
 
   const oldStatus = issue.status;
   const oldOrder = issue.order;
+
+  const issueIdStr = issueId;
+  const projectIdStr = (issue.project as Types.ObjectId).toString();
+  const orgIdStr = orgObjectId.toString();
+
+  if (updates.status !== undefined && updates.status !== issue.status) {
+    void logActivity(
+      issueIdStr,
+      projectIdStr,
+      orgIdStr,
+      userId,
+      'status_changed',
+      'status',
+      issue.status,
+      updates.status
+    );
+  }
+
+  if (updates.priority !== undefined && updates.priority !== issue.priority) {
+    void logActivity(
+      issueIdStr,
+      projectIdStr,
+      orgIdStr,
+      userId,
+      'priority_changed',
+      'priority',
+      issue.priority,
+      updates.priority
+    );
+  }
+
+  if (updates.assignee !== undefined) {
+    const oldAssignee = issue.assignee?.toString() ?? '';
+    const newAssignee = updates.assignee === null ? '' : updates.assignee;
+    if (oldAssignee !== newAssignee) {
+      void logActivity(
+        issueIdStr,
+        projectIdStr,
+        orgIdStr,
+        userId,
+        'assignee_changed',
+        'assignee',
+        oldAssignee,
+        newAssignee
+      );
+    }
+  }
+
+  if (updates.sprint !== undefined) {
+    const oldSprint = issue.sprint?.toString() ?? '';
+    const newSprint = updates.sprint === null ? '' : updates.sprint;
+    if (oldSprint !== newSprint) {
+      void logActivity(
+        issueIdStr,
+        projectIdStr,
+        orgIdStr,
+        userId,
+        'sprint_changed',
+        'sprint',
+        oldSprint,
+        newSprint
+      );
+    }
+  }
 
   const payload: Partial<{
     title: string;
@@ -595,6 +778,57 @@ export const removeWatcher = async (
   );
   if (!refreshed) throw new ApiError(500, 'Failed to reload issue');
   return refreshed.watchers as unknown as IUser[];
+};
+
+export type TBoardData = {
+  todo: IIssueDocument[];
+  inprogress: IIssueDocument[];
+  review: IIssueDocument[];
+  done: IIssueDocument[];
+};
+
+export const getBoardIssues = async (
+  projectId: string,
+  sprintId: string,
+  orgId: string,
+  userId: string
+): Promise<TBoardData> => {
+  const orgObjectId = new Types.ObjectId(orgId);
+  await requireActiveOrgMember(orgObjectId, userId);
+  await getProjectInOrgOrThrow(projectId, orgObjectId);
+
+  const issues = await Issue.find({
+    project: new Types.ObjectId(projectId),
+    sprint: new Types.ObjectId(sprintId),
+  })
+    .populate(issueBoardPopulate)
+    .sort({ order: 1 });
+
+  const data: TBoardData = { todo: [], inprogress: [], review: [], done: [] };
+
+  for (const issue of issues) {
+    if (issue.status === 'todo') data.todo.push(issue);
+    else if (issue.status === 'inprogress') data.inprogress.push(issue);
+    else if (issue.status === 'review') data.review.push(issue);
+    else if (issue.status === 'done') data.done.push(issue);
+  }
+
+  return data;
+};
+
+export const bulkUpdateIssueOrder = async (
+  updates: IBulkUpdateItem[],
+  orgId: string,
+  userId: string
+): Promise<void> => {
+  const orgObjectId = new Types.ObjectId(orgId);
+  await requireActiveOrgMember(orgObjectId, userId);
+
+  await Promise.all(
+    updates.map(({ issueId, status, order }) =>
+      Issue.findByIdAndUpdate(issueId, { status, order })
+    )
+  );
 };
 
 const ALL_TYPES: IssueType[] = ['story', 'task', 'bug', 'epic', 'subtask'];

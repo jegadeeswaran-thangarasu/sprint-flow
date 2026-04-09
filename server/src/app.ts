@@ -8,6 +8,7 @@ import authRoutes from './routes/authRoutes';
 import organisationRoutes from './routes/organisationRoutes';
 import projectRoutes from './routes/projectRoutes';
 import issueRoutes from './routes/issueRoutes';
+import commentRoutes from './routes/commentRoutes';
 import sprintRoutes from './routes/sprintRoutes';
 
 // ─── Dev Route Printer ───────────────────────────────────────────────────────
@@ -98,6 +99,10 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/organisations', organisationRoutes);
 app.use('/api/v1/organisations/:orgSlug/projects', projectRoutes);
 app.use('/api/v1/organisations/:orgSlug/projects/:projectId/issues', issueRoutes);
+app.use(
+  '/api/v1/organisations/:orgSlug/projects/:projectId/issues/:issueId/comments',
+  commentRoutes
+);
 app.use('/api/v1/organisations/:orgSlug/projects/:projectId/sprints', sprintRoutes);
 
 app.get('/api/v1/health', (_req: Request, res: Response) => {

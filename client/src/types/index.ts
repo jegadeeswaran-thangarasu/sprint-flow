@@ -139,3 +139,80 @@ export type TApiResponse<T> = {
   data: T;
   message: string;
 };
+
+export type BoardStatus = 'todo' | 'inprogress' | 'review' | 'done';
+
+export interface IBoardColumn {
+  id: BoardStatus;
+  label: string;
+  color: string;
+}
+
+export interface IBulkUpdateItem {
+  issueId: string;
+  status: IssueStatus;
+  order: number;
+}
+
+export interface IBoardData {
+  todo: IIssue[];
+  inprogress: IIssue[];
+  review: IIssue[];
+  done: IIssue[];
+}
+
+export interface IReaction {
+  emoji: string;
+  users: IUser[];
+}
+
+export interface IComment {
+  _id: string;
+  content: string;
+  issue: string;
+  author: IUser;
+  isEdited: boolean;
+  editedAt: string | null;
+  mentions: IUser[];
+  reactions: IReaction[];
+  parentComment: string | null;
+  replies?: IComment[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ActivityAction =
+  | 'created'
+  | 'updated'
+  | 'status_changed'
+  | 'priority_changed'
+  | 'assignee_changed'
+  | 'sprint_changed'
+  | 'comment_added'
+  | 'comment_deleted'
+  | 'attachment_added'
+  | 'watcher_added'
+  | 'watcher_removed'
+  | 'epic_linked'
+  | 'parent_changed';
+
+export interface IActivityLog {
+  _id: string;
+  issue: string;
+  actor: IUser;
+  action: ActivityAction;
+  field: string | null;
+  oldValue: string | null;
+  newValue: string | null;
+  createdAt: string;
+}
+
+export interface IFullIssue extends Omit<IIssue, 'project' | 'sprint'> {
+  assignee: IUser | null;
+  reporter: IUser;
+  watchers: IUser[];
+  epic: IIssueRef | null;
+  parent: IIssueRef | null;
+  sprint: ISprint | null;
+  project: IProject;
+}

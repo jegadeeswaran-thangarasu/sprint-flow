@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, useParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { useProject } from '@/hooks/useProject';
 import { useBacklogIssues, useDeleteIssue } from '@/hooks/useIssue';
@@ -15,6 +16,7 @@ import {
 } from '@/hooks/useSprint';
 import useSprintStore from '@/store/sprintStore';
 import { IProject, IIssue, ISprint, IssuePriority, IssueType } from '@/types';
+import { QUERY_KEYS } from '@/utils/constants';
 import CreateIssueModal from '@/components/issues/CreateIssueModal';
 import IssueDetailPanel from '@/components/issues/IssueDetailPanel';
 import IssueTypeIcon from '@/components/issues/IssueTypeIcon';
@@ -264,6 +266,7 @@ const BacklogPage = () => {
   const { orgSlug, projectId } = useParams<{ orgSlug: string; projectId: string }>();
   const slug = orgSlug ?? '';
   const id = projectId ?? '';
+  const queryClient = useQueryClient();
 
   const { data: project, isLoading: projectLoading } = useProject(slug, id);
   const { data: backlogIssues = [], isLoading: issuesLoading } = useBacklogIssues(slug, id);
@@ -591,7 +594,16 @@ const BacklogPage = () => {
       )}
 
       {selectedIssue && (
-        <IssueDetailPanel issue={selectedIssue} onClose={() => setSelectedIssue(null)} />
+        <IssueDetailPanel
+          issue={selectedIssue}
+          orgSlug={slug}
+          projectId={id}
+          onClose={() => setSelectedIssue(null)}
+          onUpdate={(updated) => {
+            setSelectedIssue(updated);
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.BACKLOG_ISSUES(id) });
+          }}
+        />
       )}
 
       {editingSprint && (

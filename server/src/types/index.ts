@@ -65,6 +65,62 @@ export interface IIssue {
   updatedAt: string;
 }
 
+export interface IReaction {
+  emoji: string;
+  users: IUser[];
+}
+
+export interface IComment {
+  _id: string;
+  content: string;
+  issue: string;
+  author: IUser;
+  isEdited: boolean;
+  editedAt: string | null;
+  mentions: IUser[];
+  reactions: IReaction[];
+  parentComment: string | null;
+  replies?: IComment[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ActivityAction =
+  | 'created'
+  | 'updated'
+  | 'status_changed'
+  | 'priority_changed'
+  | 'assignee_changed'
+  | 'sprint_changed'
+  | 'comment_added'
+  | 'comment_deleted'
+  | 'attachment_added'
+  | 'watcher_added'
+  | 'watcher_removed'
+  | 'epic_linked'
+  | 'parent_changed';
+
+export interface IActivityLog {
+  _id: string;
+  issue: string;
+  actor: IUser;
+  action: ActivityAction;
+  field: string | null;
+  oldValue: string | null;
+  newValue: string | null;
+  createdAt: string;
+}
+
+export interface IFullIssue extends Omit<IIssue, 'project' | 'sprint'> {
+  assignee: IUser | null;
+  reporter: IUser;
+  watchers: IUser[];
+  epic: IIssue | null;
+  parent: IIssue | null;
+  sprint: ISprint | null;
+  project: IProject;
+}
+
 export interface IOrganisation extends Document {
   _id: Types.ObjectId;
   name: string;
@@ -132,6 +188,26 @@ export type TJwtPayload = {
   userId: string;
   email: string;
 };
+
+export interface IBoardColumn {
+  id: IssueStatus;
+  label: string;
+  issues: IIssue[];
+  color: string;
+}
+
+export interface IBulkUpdateItem {
+  issueId: string;
+  status: IssueStatus;
+  order: number;
+}
+
+export interface IBoardData {
+  todo: IIssue[];
+  inprogress: IIssue[];
+  review: IIssue[];
+  done: IIssue[];
+}
 
 declare global {
   namespace Express {
