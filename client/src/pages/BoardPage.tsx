@@ -1,21 +1,55 @@
 import { useMemo, useState } from 'react';
 import { Link, NavLink, useParams } from 'react-router-dom';
 import { useProject } from '@/hooks/useProject';
-import { useProjectIssues } from '@/hooks/useIssue';
+import { useProjectSprints, useSprintIssues } from '@/hooks/useSprint';
+import useSprintStore from '@/store/sprintStore';
 import { groupIssuesByStatus } from '@/utils/issueUtils';
-import { IssueStatus } from '@/types';
+import { IIssue, IssueStatus } from '@/types';
 import CreateIssueModal from '@/components/issues/CreateIssueModal';
+import IssueTypeIcon from '@/components/issues/IssueTypeIcon';
+import PriorityIcon from '@/components/issues/PriorityIcon';
 import Button from '@/components/ui/Button';
 
 const COLUMN_ORDER: IssueStatus[] = ['todo', 'inprogress', 'review', 'done'];
 
 const COLUMN_LABEL: Record<IssueStatus, string> = {
   backlog: 'Backlog',
-  todo: 'Todo',
+  todo: 'To Do',
   inprogress: 'In Progress',
-  review: 'Review',
+  review: 'In Review',
   done: 'Done',
 };
+
+const Avatar = ({ name, avatar }: { name: string; avatar: string }) => {
+  const initial = name[0]?.toUpperCase() ?? '?';
+  if (avatar) {
+    return <img src={avatar} alt="" className="h-6 w-6 rounded-full object-cover border border-gray-200" />;
+  }
+  return (
+    <div className="h-6 w-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-semibold text-gray-600">
+      {initial}
+    </div>
+  );
+};
+
+const IssueCard = ({ issue }: { issue: IIssue }) => (
+  <li className="flex flex-col gap-2 p-3 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-default">
+    <div className="flex items-center gap-1.5">
+      <IssueTypeIcon type={issue.type} size="sm" />
+      <span className="text-xs font-mono text-gray-400 truncate">{issue.key}</span>
+      <span className="ml-auto flex-shrink-0">
+        <PriorityIcon priority={issue.priority} />
+      </span>
+    </div>
+    <p className="text-sm font-medium text-gray-900 line-clamp-2 leading-snug">{issue.title}</p>
+    {issue.assignee && (
+      <div className="flex items-center gap-1.5 mt-0.5">
+        <Avatar name={issue.assignee.name} avatar={issue.assignee.avatar} />
+        <span className="text-xs text-gray-500 truncate">{issue.assignee.name}</span>
+      </div>
+    )}
+  </li>
+);
 
 const BoardPage = () => {
   const { orgSlug, projectId } = useParams<{ orgSlug: string; projectId: string }>();
@@ -23,10 +57,18 @@ const BoardPage = () => {
   const id = projectId ?? '';
 
   const { data: project, isLoading: projectLoading } = useProject(slug, id);
-  const { data: issues = [], isLoading: issuesLoading } = useProjectIssues(slug, id);
+  useProjectSprints(slug, id);
+  const activeSprint = useSprintStore((s) => s.activeSprint);
+
+  const { data: sprintIssues = [], isLoading: issuesLoading } = useSprintIssues(
+    slug,
+    id,
+    activeSprint?._id ?? '',
+  );
+
   const [createOpen, setCreateOpen] = useState(false);
 
-  const grouped = useMemo(() => groupIssuesByStatus(issues), [issues]);
+  const grouped = useMemo(() => groupIssuesByStatus(sprintIssues), [sprintIssues]);
 
   const loading = projectLoading || issuesLoading;
 
@@ -91,7 +133,29 @@ const BoardPage = () => {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-3 flex-shrink-0">
+        <div className="flex items-center gap-3 flex-shrink-0 flex-wrap">
+          {activeSprint ? (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+              <span className="inline-block w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
+              <span className="font-medium text-blue-800 truncate max-w-[160px]">{activeSprint.name}</span>
+              <Link
+                to={`/org/${slug}/projects/${id}/backlog`}
+                className="text-blue-600 hover:text-blue-800 text-xs font-medium flex-shrink-0"
+              >
+                View backlog
+              </Link>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-500">
+              No active sprint —{' '}
+              <Link
+                to={`/org/${slug}/projects/${id}/backlog`}
+                className="text-blue-600 hover:text-blue-800 font-medium"
+              >
+                start one in backlog
+              </Link>
+            </div>
+          )}
           <Button onClick={() => setCreateOpen(true)}>
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -110,25 +174,48 @@ const BoardPage = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {COLUMN_ORDER.map((status) => (
-          <div
-            key={status}
-            className="flex flex-col rounded-xl border border-gray-200 bg-gray-50/80 min-h-[280px]"
+      {!activeSprint ? (
+        <div className="flex flex-col items-center justify-center py-24 text-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50">
+          <div className="text-4xl mb-3">🏃</div>
+          <h3 className="text-base font-semibold text-gray-800 mb-1">No active sprint</h3>
+          <p className="text-sm text-gray-500 mb-4">Start a sprint from the backlog to see issues on the board.</p>
+          <Link
+            to={`/org/${slug}/projects/${id}/backlog`}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
           >
-            <div className="flex items-center justify-between px-3 py-2.5 border-b border-gray-200 bg-white rounded-t-xl">
-              <span className="text-sm font-semibold text-gray-800">{COLUMN_LABEL[status]}</span>
-              <span className="text-xs font-medium text-gray-500 tabular-nums bg-gray-100 px-2 py-0.5 rounded-full">
-                {grouped[status].length}
-              </span>
+            Go to backlog
+          </Link>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {COLUMN_ORDER.map((status) => (
+            <div
+              key={status}
+              className="flex flex-col rounded-xl border border-gray-200 bg-gray-50/80 min-h-[280px]"
+            >
+              <div className="flex items-center justify-between px-3 py-2.5 border-b border-gray-200 bg-white rounded-t-xl">
+                <span className="text-sm font-semibold text-gray-800">{COLUMN_LABEL[status]}</span>
+                <span className="text-xs font-medium text-gray-500 tabular-nums bg-gray-100 px-2 py-0.5 rounded-full">
+                  {grouped[status].length}
+                </span>
+              </div>
+              <div className="flex-1 p-2">
+                {grouped[status].length === 0 ? (
+                  <div className="flex items-center justify-center h-full min-h-[120px]">
+                    <p className="text-xs text-gray-400">No issues</p>
+                  </div>
+                ) : (
+                  <ul className="space-y-2">
+                    {grouped[status].map((issue) => (
+                      <IssueCard key={issue._id} issue={issue} />
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
-            <div className="flex-1 p-3 flex flex-col items-center justify-center text-center">
-              <p className="text-sm text-gray-500 mb-1">Kanban board coming soon</p>
-              <p className="text-xs text-gray-400">Drag and drop will arrive in the next phase</p>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {createOpen && (
         <CreateIssueModal

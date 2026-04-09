@@ -102,6 +102,32 @@ export interface IIssue {
   updatedAt: string;
 }
 
+export type SprintStatus = 'planning' | 'active' | 'completed';
+
+export interface ISprint {
+  _id: string;
+  name: string;
+  goal: string;
+  project: string;
+  organisation: string;
+  status: SprintStatus;
+  startDate: string | null;
+  endDate: string | null;
+  completedAt: string | null;
+  order: number;
+  createdBy: IUser;
+  issueCount?: number;
+  completedIssueCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ICompleteSprintResult {
+  sprint: ISprint;
+  completedIssues: number;
+  movedIssues: number;
+}
+
 export type TAuthState = {
   user: IUser | null;
   accessToken: string | null;

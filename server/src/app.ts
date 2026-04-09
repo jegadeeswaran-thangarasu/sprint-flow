@@ -8,6 +8,7 @@ import authRoutes from './routes/authRoutes';
 import organisationRoutes from './routes/organisationRoutes';
 import projectRoutes from './routes/projectRoutes';
 import issueRoutes from './routes/issueRoutes';
+import sprintRoutes from './routes/sprintRoutes';
 
 // ─── Dev Route Printer ───────────────────────────────────────────────────────
 // Recursively walks the Express router stack and logs every registered route.
@@ -97,6 +98,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/organisations', organisationRoutes);
 app.use('/api/v1/organisations/:orgSlug/projects', projectRoutes);
 app.use('/api/v1/organisations/:orgSlug/projects/:projectId/issues', issueRoutes);
+app.use('/api/v1/organisations/:orgSlug/projects/:projectId/sprints', sprintRoutes);
 
 app.get('/api/v1/health', (_req: Request, res: Response) => {
   res.json({ success: true, data: null, message: 'SprintFlow API is running' });
