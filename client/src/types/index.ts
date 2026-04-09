@@ -8,6 +8,34 @@ export interface IUser {
   updatedAt: string;
 }
 
+export type OrgRole = 'owner' | 'admin' | 'member';
+
+export interface IOrganisation {
+  _id: string;
+  name: string;
+  slug: string;
+  description: string;
+  logo: string;
+  owner: string;
+  plan: 'free' | 'pro';
+  isActive: boolean;
+  memberCount?: number;
+  myRole?: OrgRole;
+  createdAt: string;
+}
+
+export interface IOrgMember {
+  _id: string;
+  organisation: string;
+  user: IUser | null;
+  email: string;
+  role: OrgRole;
+  status: 'invited' | 'active' | 'suspended';
+  invitedBy: string;
+  joinedAt?: string;
+  createdAt: string;
+}
+
 export interface TAuthResponse {
   user: IUser;
   accessToken: string;

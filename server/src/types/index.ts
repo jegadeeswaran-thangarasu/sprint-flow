@@ -41,6 +41,37 @@ export interface IIssue extends Document {
   updatedAt: Date;
 }
 
+export interface IOrganisation extends Document {
+  _id: Types.ObjectId;
+  name: string;
+  slug: string;
+  description?: string;
+  logo?: string;
+  owner: Types.ObjectId;
+  plan: 'free' | 'pro';
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type OrgRole = 'owner' | 'admin' | 'member';
+export type OrgStatus = 'invited' | 'active' | 'suspended';
+
+export interface IOrgMember extends Document {
+  _id: Types.ObjectId;
+  organisation: Types.ObjectId;
+  user: Types.ObjectId | null;
+  email: string;
+  role: OrgRole;
+  status: OrgStatus;
+  inviteToken?: string;
+  inviteTokenExpiry?: Date;
+  joinedAt?: Date;
+  invitedBy: Types.ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export type TApiResponse<T> = {
   success: boolean;
   data: T;
@@ -56,6 +87,7 @@ declare global {
   namespace Express {
     interface Request {
       user?: TJwtPayload;
+      orgMember?: IOrgMember;
     }
   }
 }
