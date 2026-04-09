@@ -10,6 +10,8 @@ import projectRoutes from './routes/projectRoutes';
 import issueRoutes from './routes/issueRoutes';
 import commentRoutes from './routes/commentRoutes';
 import sprintRoutes from './routes/sprintRoutes';
+import dashboardRoutes from './routes/dashboardRoutes';
+import reportRoutes from './routes/reportRoutes';
 
 // ─── Dev Route Printer ───────────────────────────────────────────────────────
 // Recursively walks the Express router stack and logs every registered route.
@@ -97,7 +99,12 @@ app.use('/api/', apiLimiter);
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/organisations', organisationRoutes);
+app.use('/api/v1/organisations/:orgSlug/dashboard', dashboardRoutes);
 app.use('/api/v1/organisations/:orgSlug/projects', projectRoutes);
+app.use(
+  '/api/v1/organisations/:orgSlug/projects/:projectId/reports',
+  reportRoutes
+);
 app.use('/api/v1/organisations/:orgSlug/projects/:projectId/issues', issueRoutes);
 app.use(
   '/api/v1/organisations/:orgSlug/projects/:projectId/issues/:issueId/comments',

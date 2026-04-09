@@ -209,6 +209,70 @@ export interface IBoardData {
   done: IIssue[];
 }
 
+export interface ISprintProgress {
+  sprint: ISprint;
+  project: IProject;
+  total: number;
+  done: number;
+  percentage: number;
+}
+
+export interface IIssueStats {
+  byStatus: Record<IssueStatus, number>;
+  byPriority: Record<IssuePriority, number>;
+}
+
+export interface IDashboardData {
+  myIssues: IIssue[];
+  recentProjects: IProject[];
+  sprintProgress: ISprintProgress[];
+  issueStats: IIssueStats;
+}
+
+export interface ISearchResults {
+  issues: IIssue[];
+  projects: IProject[];
+  members: IUser[];
+}
+
+export interface IBurndownData {
+  sprintName: string;
+  startDate: string;
+  endDate: string;
+  totalPoints: number;
+  data: Array<{
+    date: string;
+    ideal: number;
+    actual: number;
+  }>;
+}
+
+export type IVelocityData = Array<{
+  sprintName: string;
+  committed: number;
+  completed: number;
+}>;
+
+export interface IIssueBreakdown {
+  byType: Record<IssueType, number>;
+  byPriority: Record<IssuePriority, number>;
+  byStatus: Record<IssueStatus, number>;
+  byAssignee: Array<{ user: IUser; count: number }>;
+}
+
+export interface ISprintReport {
+  sprint: ISprint;
+  completedIssues: IIssue[];
+  incompleteIssues: IIssue[];
+  addedDuringSprintCount: number;
+  velocityPoints: number;
+  teamContributions: Array<{
+    user: IUser;
+    issuesCompleted: number;
+    storyPoints: number;
+  }>;
+}
+
 declare global {
   namespace Express {
     interface Request {

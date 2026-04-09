@@ -14,4 +14,14 @@ export const QUERY_KEYS = {
   ORG_MEMBERS: (slug: string) => ['organisations', slug, 'members'],
   PROJECTS: (orgSlug: string) => ['projects', orgSlug],
   PROJECT: (orgSlug: string, projectId: string) => ['projects', orgSlug, projectId],
+  DASHBOARD: (orgSlug: string) => ['dashboard', orgSlug] as const,
+  SEARCH: (orgSlug: string, query: string) => ['search', orgSlug, query] as const,
+  BURNDOWN: (orgSlug: string, projectId: string, sprintId: string) =>
+    ['burndown', orgSlug, projectId, sprintId] as const,
+  VELOCITY: (orgSlug: string, projectId: string, limit: number) =>
+    ['velocity', orgSlug, projectId, limit] as const,
+  BREAKDOWN: (orgSlug: string, projectId: string, sprintId: string | null) =>
+    ['breakdown', orgSlug, projectId, sprintId ?? 'all'] as const,
+  SPRINT_REPORT: (orgSlug: string, projectId: string, sprintId: string) =>
+    ['sprint-report', orgSlug, projectId, sprintId] as const,
 } as const;

@@ -58,7 +58,7 @@ const OrgCard = ({ org }: { org: IOrganisation }) => {
       </div>
 
       <button
-        onClick={() => navigate(`/org/${org.slug}/projects`)}
+        onClick={() => navigate(`/org/${org.slug}/dashboard`)}
         className="flex-shrink-0 text-sm font-medium text-blue-600 border border-blue-200 rounded-lg px-3 py-1.5 hover:bg-blue-50 transition-colors opacity-0 group-hover:opacity-100"
       >
         Open

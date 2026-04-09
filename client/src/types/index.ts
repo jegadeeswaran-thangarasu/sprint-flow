@@ -216,3 +216,77 @@ export interface IFullIssue extends Omit<IIssue, 'project' | 'sprint'> {
   sprint: ISprint | null;
   project: IProject;
 }
+
+/** Dashboard / search: issue row with populated project (and optional sprint) */
+export interface IDashboardMyIssue extends Omit<IIssue, 'project' | 'sprint'> {
+  project: Pick<IProject, '_id' | 'name' | 'key' | 'color'>;
+  sprint: Pick<ISprint, '_id' | 'name'> | null;
+}
+
+export interface ISprintProgress {
+  sprint: ISprint;
+  project: IProject;
+  total: number;
+  done: number;
+  percentage: number;
+}
+
+export interface IIssueStats {
+  byStatus: Record<IssueStatus, number>;
+  byPriority: Record<IssuePriority, number>;
+}
+
+export interface IDashboardData {
+  myIssues: IDashboardMyIssue[];
+  recentProjects: IProject[];
+  sprintProgress: ISprintProgress[];
+  issueStats: IIssueStats;
+}
+
+export interface ISearchIssue extends Omit<IIssue, 'project'> {
+  project: Pick<IProject, '_id' | 'name' | 'key' | 'color'>;
+}
+
+export interface ISearchResults {
+  issues: ISearchIssue[];
+  projects: IProject[];
+  members: IUser[];
+}
+
+export interface IBurndownData {
+  sprintName: string;
+  startDate: string;
+  endDate: string;
+  totalPoints: number;
+  data: Array<{
+    date: string;
+    ideal: number;
+    actual: number;
+  }>;
+}
+
+export type IVelocityData = Array<{
+  sprintName: string;
+  committed: number;
+  completed: number;
+}>;
+
+export interface IIssueBreakdown {
+  byType: Record<IssueType, number>;
+  byPriority: Record<IssuePriority, number>;
+  byStatus: Record<IssueStatus, number>;
+  byAssignee: Array<{ user: IUser; count: number }>;
+}
+
+export interface ISprintReport {
+  sprint: ISprint;
+  completedIssues: IIssue[];
+  incompleteIssues: IIssue[];
+  addedDuringSprintCount: number;
+  velocityPoints: number;
+  teamContributions: Array<{
+    user: IUser;
+    issuesCompleted: number;
+    storyPoints: number;
+  }>;
+}

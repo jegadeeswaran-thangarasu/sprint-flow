@@ -5,6 +5,7 @@ import useAuthStore from '@/store/authStore';
 import useProjectStore from '@/store/projectStore';
 import { useLogout } from '@/hooks/useAuth';
 import { IOrganisation } from '@/types';
+import GlobalSearch from '@/components/search/GlobalSearch';
 
 const OrgInitialAvatar = ({ name, size = 'sm' }: { name: string; size?: 'sm' | 'md' }) => {
   const initials = name
@@ -80,7 +81,7 @@ const OrgSwitcher = ({ currentOrg }: { currentOrg: IOrganisation | null }) => {
             <button
               key={org._id}
               onClick={() => {
-                navigate(`/org/${org.slug}/projects`);
+                navigate(`/org/${org.slug}/dashboard`);
                 setOpen(false);
               }}
               className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${
@@ -127,7 +128,7 @@ interface NavItemProps {
 const NavItem = ({ to, icon, label, badge }: NavItemProps) => (
   <NavLink
     to={to}
-    end={label === 'Projects'}
+    end={label === 'Projects' || label === 'Dashboard'}
     className={({ isActive }) =>
       [
         'flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
@@ -236,9 +237,25 @@ const OrgLayout = () => {
             <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">SprintFlow</span>
           </div>
           <OrgSwitcher currentOrg={currentOrg} />
+          <div className="mt-2">
+            <GlobalSearch orgSlug={slug} />
+          </div>
         </div>
 
         <nav className="flex-1 p-3 flex flex-col gap-1 overflow-y-auto">
+          <NavItem
+            to={`/org/${slug}/dashboard`}
+            icon={
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                />
+              </svg>
+            }
+            label="Dashboard"
+          />
           <NavItem
             to={`/org/${slug}/projects`}
             icon={
@@ -263,6 +280,26 @@ const OrgLayout = () => {
                 <span className="text-base leading-none">{currentProject.icon || '📁'}</span>
                 <span className="truncate">{currentProject.name}</span>
               </Link>
+              <NavLink
+                to={`/org/${slug}/projects/${currentProject._id}/reports`}
+                className={({ isActive }) =>
+                  [
+                    'flex items-center gap-2 px-2 py-1.5 rounded-md text-sm font-medium transition-colors',
+                    isActive
+                      ? 'bg-blue-50 text-blue-700'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                  ].join(' ')
+                }
+              >
+                <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  />
+                </svg>
+                <span>Reports</span>
+              </NavLink>
               <Link
                 to={`/org/${slug}/projects`}
                 className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"

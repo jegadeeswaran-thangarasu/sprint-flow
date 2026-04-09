@@ -11,7 +11,7 @@ const navigateAfterAuth = (orgs: IOrganisation[], navigate: (path: string) => vo
   if (orgs.length === 0) {
     navigate('/onboarding');
   } else if (orgs.length === 1) {
-    navigate(`/org/${orgs[0].slug}/projects`);
+    navigate(`/org/${orgs[0].slug}/dashboard`);
   } else {
     navigate('/select-org');
   }

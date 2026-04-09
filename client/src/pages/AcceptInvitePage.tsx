@@ -91,7 +91,7 @@ const AcceptInvitePage = () => {
               </p>
             </div>
             <button
-              onClick={() => navigate(`/org/${org.slug}/projects`)}
+              onClick={() => navigate(`/org/${org.slug}/dashboard`)}
               className="inline-flex items-center gap-2 bg-blue-600 text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors"
             >
               Go to projects

@@ -51,7 +51,7 @@ export const useCreateOrganisation = () => {
       createOrganisation(name, description),
     onSuccess: (org) => {
       addOrg(org);
-      navigate(`/org/${org.slug}/projects`);
+      navigate(`/org/${org.slug}/dashboard`);
     },
   });
 };
@@ -85,7 +85,7 @@ export const useAcceptInvite = () => {
     mutationFn: (token: string) => acceptInvite(token),
     onSuccess: (org) => {
       addOrg(org);
-      navigate(`/org/${org.slug}/projects`);
+      navigate(`/org/${org.slug}/dashboard`);
     },
   });
 };
