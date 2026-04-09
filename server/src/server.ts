@@ -6,12 +6,15 @@ import app from './app';
 import connectDB from './config/db';
 import logger from './utils/logger';
 
-const PORT = process.env.PORT ?? '5000';
+const HOST = '0.0.0.0';
+const PORT = parseInt(process.env.PORT ?? '5001', 10);
 
 const start = async (): Promise<void> => {
   await connectDB();
-  app.listen(PORT, () => {
-    logger.info(`Server running on port ${PORT}`);
+  app.listen(PORT, HOST, () => {
+    logger.info(`Server running on http://${HOST}:${PORT}`);
+    logger.info(`Environment: ${process.env.NODE_ENV}`);
+    logger.info(`CORS origin: ${process.env.CLIENT_URL}`);
   });
 };
 

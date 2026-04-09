@@ -66,20 +66,38 @@ export interface IProject {
   updatedAt: string;
 }
 
+export type IssueType = 'story' | 'task' | 'bug' | 'epic' | 'subtask';
+export type IssueStatus = 'backlog' | 'todo' | 'inprogress' | 'review' | 'done';
+export type IssuePriority = 'urgent' | 'high' | 'medium' | 'low';
+
+/** Populated epic/parent from API */
+export interface IIssueRef {
+  _id: string;
+  key: string;
+  title: string;
+  status?: IssueStatus;
+}
+
 export interface IIssue {
   _id: string;
+  key: string;
   title: string;
   description: string;
-  status: 'backlog' | 'todo' | 'in-progress' | 'in-review' | 'done';
-  priority: 'critical' | 'high' | 'medium' | 'low';
-  type: 'story' | 'bug' | 'task' | 'subtask';
+  type: IssueType;
+  status: IssueStatus;
+  priority: IssuePriority;
   project: string;
-  assignee?: string;
-  reporter: string;
-  sprint?: string;
-  storyPoints?: number;
+  organisation: string;
+  sprint: string | null;
+  epic: IIssueRef | null;
+  parent: IIssueRef | null;
+  assignee: IUser | null;
+  reporter: IUser;
+  storyPoints: number | null;
   labels: string[];
   order: number;
+  dueDate: string | null;
+  watchers?: IUser[];
   createdAt: string;
   updatedAt: string;
 }

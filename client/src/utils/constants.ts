@@ -1,6 +1,8 @@
 export const QUERY_KEYS = {
   ME: ['me'],
   ISSUES: (projectId: string) => ['issues', projectId],
+  BACKLOG_ISSUES: (projectId: string) => ['issues', projectId, 'backlog'],
+  ISSUE: (issueId: string) => ['issues', issueId],
   SPRINTS: (projectId: string) => ['sprints', projectId],
   ORGANISATIONS: ['organisations'],
   ORGANISATION: (slug: string) => ['organisations', slug],

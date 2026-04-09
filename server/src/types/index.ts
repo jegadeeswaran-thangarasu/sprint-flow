@@ -1,16 +1,15 @@
 import { Document, Types } from 'mongoose';
 import { IProjectDocument } from '../models/Project';
 
-export interface IUser extends Document {
-  _id: Types.ObjectId;
+/** User shape as returned in JSON API responses */
+export interface IUser {
+  _id: string;
   name: string;
   email: string;
-  passwordHash: string;
   avatar?: string;
   role: 'admin' | 'member';
-  refreshToken?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type ProjectRole = 'lead' | 'member';
@@ -38,22 +37,32 @@ export interface IProject extends Document {
   updatedAt: Date;
 }
 
-export interface IIssue extends Document {
-  _id: Types.ObjectId;
+export type IssueType = 'story' | 'task' | 'bug' | 'epic' | 'subtask';
+export type IssueStatus = 'backlog' | 'todo' | 'inprogress' | 'review' | 'done';
+export type IssuePriority = 'urgent' | 'high' | 'medium' | 'low';
+
+export interface IIssue {
+  _id: string;
+  key: string;
   title: string;
   description: string;
-  status: 'backlog' | 'todo' | 'in-progress' | 'in-review' | 'done';
-  priority: 'critical' | 'high' | 'medium' | 'low';
-  type: 'story' | 'bug' | 'task' | 'subtask';
-  project: Types.ObjectId;
-  assignee?: Types.ObjectId;
-  reporter: Types.ObjectId;
-  sprint?: Types.ObjectId;
-  storyPoints?: number;
+  type: IssueType;
+  status: IssueStatus;
+  priority: IssuePriority;
+  project: string;
+  organisation: string;
+  sprint: string | null;
+  epic: IIssue | null;
+  parent: IIssue | null;
+  assignee: IUser | null;
+  reporter: IUser;
+  storyPoints: number | null;
   labels: string[];
   order: number;
-  createdAt: Date;
-  updatedAt: Date;
+  dueDate: string | null;
+  watchers: IUser[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface IOrganisation extends Document {
