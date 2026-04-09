@@ -1,4 +1,5 @@
 import { Document, Types } from 'mongoose';
+import { IProjectDocument } from '../models/Project';
 
 export interface IUser extends Document {
   _id: Types.ObjectId;
@@ -12,13 +13,27 @@ export interface IUser extends Document {
   updatedAt: Date;
 }
 
+export type ProjectRole = 'lead' | 'member';
+export type ProjectStatus = 'active' | 'archived';
+
+export interface IProjectMember {
+  user: IUser;
+  role: ProjectRole;
+  addedAt: string;
+}
+
 export interface IProject extends Document {
   _id: Types.ObjectId;
   name: string;
-  description: string;
   key: string;
-  owner: Types.ObjectId;
-  members: Types.ObjectId[];
+  description?: string;
+  organisation: Types.ObjectId;
+  lead?: IUser;
+  members: IProjectMember[];
+  status: ProjectStatus;
+  icon?: string;
+  color?: string;
+  issueCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -88,6 +103,7 @@ declare global {
     interface Request {
       user?: TJwtPayload;
       orgMember?: IOrgMember;
+      project?: IProjectDocument;
     }
   }
 }

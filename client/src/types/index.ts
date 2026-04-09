@@ -41,13 +41,27 @@ export interface TAuthResponse {
   accessToken: string;
 }
 
+export type ProjectRole = 'lead' | 'member';
+export type ProjectStatus = 'active' | 'archived';
+
+export interface IProjectMember {
+  user: IUser;
+  role: ProjectRole;
+  addedAt: string;
+}
+
 export interface IProject {
   _id: string;
   name: string;
-  description: string;
   key: string;
-  owner: string;
-  members: string[];
+  description: string;
+  organisation: string;
+  lead: IUser;
+  members: IProjectMember[];
+  status: ProjectStatus;
+  icon: string;
+  color: string;
+  issueCount: number;
   createdAt: string;
   updatedAt: string;
 }

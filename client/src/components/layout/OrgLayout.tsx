@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { NavLink, Outlet, useNavigate, useParams } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, useParams, useMatch, Link } from 'react-router-dom';
 import useOrgStore from '@/store/orgStore';
 import useAuthStore from '@/store/authStore';
+import useProjectStore from '@/store/projectStore';
 import { useLogout } from '@/hooks/useAuth';
 import { IOrganisation } from '@/types';
 
@@ -120,9 +121,10 @@ interface NavItemProps {
   to: string;
   icon: React.ReactNode;
   label: string;
+  badge?: number;
 }
 
-const NavItem = ({ to, icon, label }: NavItemProps) => (
+const NavItem = ({ to, icon, label, badge }: NavItemProps) => (
   <NavLink
     to={to}
     end={label === 'Projects'}
@@ -136,7 +138,12 @@ const NavItem = ({ to, icon, label }: NavItemProps) => (
     }
   >
     {icon}
-    {label}
+    <span className="flex-1">{label}</span>
+    {badge !== undefined && (
+      <span className="ml-auto inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+        {badge}
+      </span>
+    )}
   </NavLink>
 );
 
@@ -207,10 +214,14 @@ const UserMenu = () => {
 const OrgLayout = () => {
   const { orgSlug } = useParams<{ orgSlug: string }>();
   const currentOrg = useOrgStore((state) => state.currentOrg);
+  const { projects, currentProject } = useProjectStore();
   const canViewSettings =
     currentOrg?.myRole === 'owner' || currentOrg?.myRole === 'admin';
 
   const slug = orgSlug ?? '';
+
+  // Detect if we're inside a specific project route
+  const insideProject = useMatch('/org/:orgSlug/projects/:projectId/*');
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -236,7 +247,33 @@ const OrgLayout = () => {
               </svg>
             }
             label="Projects"
+            badge={projects.length > 0 ? projects.length : undefined}
           />
+
+          {/* Project context — shown when inside a project route */}
+          {insideProject && currentProject && (
+            <div className="mt-1 ml-1 pl-3 border-l-2 border-gray-100">
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide px-2 pt-1 pb-0.5">
+                Current project
+              </p>
+              <Link
+                to={`/org/${slug}/projects/${currentProject._id}/board`}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <span className="text-base leading-none">{currentProject.icon || '📁'}</span>
+                <span className="truncate">{currentProject.name}</span>
+              </Link>
+              <Link
+                to={`/org/${slug}/projects`}
+                className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+                All projects
+              </Link>
+            </div>
+          )}
           <NavItem
             to={`/org/${slug}/members`}
             icon={

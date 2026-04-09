@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import errorHandler from './middleware/errorHandler';
 import authRoutes from './routes/authRoutes';
 import organisationRoutes from './routes/organisationRoutes';
+import projectRoutes from './routes/projectRoutes';
 
 // ─── Dev Route Printer ───────────────────────────────────────────────────────
 // Recursively walks the Express router stack and logs every registered route.
@@ -63,7 +64,7 @@ app.use('/api/', apiLimiter);
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/organisations', organisationRoutes);
-// app.use('/api/v1/projects', projectRoutes);
+app.use('/api/v1/organisations/:orgSlug/projects', projectRoutes);
 // app.use('/api/v1/issues', issueRoutes);
 
 app.get('/api/v1/health', (_req: Request, res: Response) => {
