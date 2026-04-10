@@ -65,3 +65,28 @@ It is NOT a clone — it is an original product with clean architecture.
 - Sanitize all user inputs
 - Rate limit all auth routes
 - CORS restricted to CLIENT_URL env var in production
+
+## User Journey
+1. Register/Login
+2. If no org → redirect to /onboarding → create org → become owner
+3. If has org → redirect to /org/:orgSlug/projects
+4. If multiple orgs → redirect to /select-org
+
+## Organisation Rules
+- User can belong to multiple orgs
+- Each org has a unique slug (auto-generated from name)
+- Roles: owner (1 per org) | admin | member
+- Invite flow: generate token → share link → recipient joins
+- Only owner/admin can invite members
+- Only owner can delete org or transfer ownership
+
+## URL Structure
+All app routes are scoped to org:
+/onboarding
+/select-org  
+/org/:orgSlug/projects
+/org/:orgSlug/projects/:projectId/board
+/org/:orgSlug/projects/:projectId/backlog
+/org/:orgSlug/members
+/org/:orgSlug/settings
+/invite/:token  (public)

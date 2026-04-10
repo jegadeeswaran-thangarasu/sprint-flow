@@ -1,36 +1,50 @@
+import { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import useAuthStore from '@/store/authStore';
-import { useGetMe } from '@/hooks/useAuth';
-
-const Spinner = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gray-50">
-    <svg
-      className="h-8 w-8 animate-spin text-blue-600"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-      />
-    </svg>
-  </div>
-);
+import useOrgStore from '@/store/orgStore';
+import { getMe } from '@/api/authApi';
+import { getMyOrganisations } from '@/api/organisationApi';
+import FullPageSpinner from '@/components/ui/FullPageSpinner';
 
 const ProtectedRoute = () => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const { isLoading } = useGetMe();
+  const [isInitialized, setIsInitialized] = useState(false);
+  const { isAuthenticated, setAuth, clearAuth } = useAuthStore();
+  const { setMyOrgs } = useOrgStore();
+
+  useEffect(() => {
+    const initialize = async () => {
+      // Not logged in — nothing to restore, proceed immediately
+      if (!isAuthenticated) {
+        setIsInitialized(true);
+        return;
+      }
+
+      try {
+        // getMe triggers the 401 → /auth/refresh interceptor when accessToken
+        // is null (e.g. after page refresh), so the session is silently restored
+        const user = await getMe();
+        const orgs = await getMyOrganisations();
+        setMyOrgs(orgs);
+        // Preserve the refreshed accessToken that the interceptor put in the store
+        setAuth(user, useAuthStore.getState().accessToken ?? '');
+      } catch {
+        // Refresh token expired or invalid — force re-login
+        clearAuth();
+      } finally {
+        setIsInitialized(true);
+      }
+    };
+
+    initialize();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!isInitialized) {
+    return <FullPageSpinner />;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
-  }
-
-  if (isLoading) {
-    return <Spinner />;
   }
 
   return <Outlet />;

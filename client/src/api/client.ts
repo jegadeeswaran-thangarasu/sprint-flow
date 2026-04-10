@@ -9,12 +9,16 @@ interface RetryConfig extends InternalAxiosRequestConfig {
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true,
+  timeout: 10000,
 });
 
 apiClient.interceptors.request.use((config) => {
   const token = getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  if (import.meta.env.DEV) {
+    console.log(`API: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
   }
   return config;
 });
@@ -48,6 +52,11 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config as RetryConfig | undefined;
     const status = error.response?.status;
     const isAuthPath = AUTH_PATHS.some((path) => originalRequest?.url?.includes(path));
+
+    if (!error.response) {
+      console.error('Network error — is the server running?');
+      return Promise.reject(new Error('Cannot connect to server. Please check your connection.'));
+    }
 
     if (status === 401 && originalRequest && !originalRequest._retry && !isAuthPath) {
       if (isRefreshing) {
